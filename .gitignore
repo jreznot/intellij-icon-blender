@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Logs
+yarn-error.log*
+yarn-debug.log*
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
