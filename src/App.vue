@@ -39,7 +39,18 @@
           <option v-for="icon in mainIcons" :key="icon.name" :value="icon.name">
             {{ icon.name }}
           </option>
+          <option value="__custom__" v-if="customMainIconSvg">✦ Custom (uploaded)</option>
         </select>
+        <label class="upload-btn" title="Upload custom main icon SVG">
+          …
+          <input
+            type="file"
+            accept=".svg,image/svg+xml"
+            class="file-input-hidden"
+            @change="onCustomMainIconUpload"
+            ref="mainIconFileInput"
+          />
+        </label>
         <span
           v-if="selectedMainIcon"
           class="icon-preview-inline"
@@ -370,7 +381,9 @@ export default {
       detectedCutoutShape: '',
       combinedSvg: '',
       combinedSvgDark: '',
-      previewTheme: 'light'
+      previewTheme: 'light',
+      customMainIconSvg: '',
+      customMainIconName: ''
     }
   },
   watch: {
@@ -404,8 +417,27 @@ export default {
   },
   methods: {
     getMainIconSvg(name) {
+      if (name === '__custom__' && this.customMainIconSvg) {
+        return this.customMainIconSvg
+      }
       const icon = this.mainIcons.find(i => i.name === name)
       return icon ? icon.svg : ''
+    },
+    onCustomMainIconUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const svgContent = e.target.result
+        if (!svgContent.includes('<svg')) {
+          alert('Please upload a valid SVG file.')
+          return
+        }
+        this.customMainIconSvg = svgContent
+        this.customMainIconName = file.name.replace(/\.svg$/i, '')
+        this.selectedMainIcon = '__custom__'
+      }
+      reader.readAsText(file)
     },
     getModifierIconSvg(name) {
       const icon = this.modifierIcons.find(i => i.name === name)
@@ -434,9 +466,18 @@ export default {
       }
     },
     combineIcons() {
-      const mainIcon = this.mainIcons.find(i => i.name === this.selectedMainIcon)
+      let mainSvg, mainSvgDark
+      if (this.selectedMainIcon === '__custom__' && this.customMainIconSvg) {
+        mainSvg = this.customMainIconSvg
+        mainSvgDark = this.customMainIconSvg
+      } else {
+        const mainIcon = this.mainIcons.find(i => i.name === this.selectedMainIcon)
+        if (!mainIcon) return
+        mainSvg = mainIcon.svg
+        mainSvgDark = mainIcon.svgDark
+      }
       const modifierIcon = this.modifierIcons.find(i => i.name === this.selectedModifierIcon)
-      if (!mainIcon || !modifierIcon) return
+      if (!modifierIcon) return
 
       // Detect shape if not yet detected
       if (!this.detectedCutoutShape) {
@@ -444,12 +485,13 @@ export default {
       }
 
       const shape = this.selectedCutoutShape || undefined
-      this.combinedSvg = combineIconSvgs(mainIcon.svg, modifierIcon.svg, shape)
-      this.combinedSvgDark = combineIconSvgs(mainIcon.svgDark, modifierIcon.svgDark, shape)
+      this.combinedSvg = combineIconSvgs(mainSvg, modifierIcon.svg, shape)
+      this.combinedSvgDark = combineIconSvgs(mainSvgDark, modifierIcon.svgDark, shape)
     },
     downloadIcons() {
       if (!this.combinedSvg) return
-      const baseName = `${this.selectedMainIcon}_${this.selectedModifierIcon}`
+      const mainName = this.selectedMainIcon === '__custom__' ? this.customMainIconName : this.selectedMainIcon
+      const baseName = `${mainName}_${this.selectedModifierIcon}`
       const copyright = '<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->\n'
 
       // Download regular (light) SVG
@@ -672,6 +714,32 @@ h2 {
   font-size: 12px;
   color: #888;
   white-space: nowrap;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px !important;
+  padding: 2px 4px;
+  height: 24px;
+  border-radius: 4px;
+  background: #3a3a3a;
+  color: #999;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.upload-btn:hover {
+  background: #5b9bd5;
+  color: #fff;
+}
+
+.file-input-hidden {
+  display: none;
 }
 
 .footer {
