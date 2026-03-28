@@ -54,7 +54,7 @@
         <span
           v-if="selectedMainIcon"
           class="icon-preview-inline"
-          v-html="getMainIconSvg(selectedMainIcon)"
+          v-html="getMainIconSvg(selectedMainIcon, previewTheme === 'dark')"
         ></span>
       </div>
 
@@ -66,10 +66,12 @@
             {{ icon.name }}
           </option>
         </select>
+        <button class="nav-btn" @click="prevModifierIcon" title="Previous modifier icon">◀</button>
+        <button class="nav-btn" @click="nextModifierIcon" title="Next modifier icon">▶</button>
         <span
           v-if="selectedModifierIcon"
           class="icon-preview-inline"
-          v-html="getModifierIconSvg(selectedModifierIcon)"
+          v-html="getModifierIconSvg(selectedModifierIcon, previewTheme === 'dark')"
         ></span>
       </div>
 
@@ -381,7 +383,7 @@ export default {
       detectedCutoutShape: '',
       combinedSvg: '',
       combinedSvgDark: '',
-      previewTheme: 'light',
+      previewTheme: 'dark',
       customMainIconSvg: '',
       customMainIconName: ''
     }
@@ -416,12 +418,13 @@ export default {
     }
   },
   methods: {
-    getMainIconSvg(name) {
+    getMainIconSvg(name, dark = false) {
       if (name === '__custom__' && this.customMainIconSvg) {
         return this.customMainIconSvg
       }
       const icon = this.mainIcons.find(i => i.name === name)
-      return icon ? icon.svg : ''
+      if (!icon) return ''
+      return dark ? icon.svgDark : icon.svg
     },
     onCustomMainIconUpload(event) {
       const file = event.target.files[0]
@@ -439,9 +442,10 @@ export default {
       }
       reader.readAsText(file)
     },
-    getModifierIconSvg(name) {
+    getModifierIconSvg(name, dark = false) {
       const icon = this.modifierIcons.find(i => i.name === name)
-      return icon ? icon.svg : ''
+      if (!icon) return ''
+      return dark ? icon.svgDark : icon.svg
     },
     cutoutShapeLabel(type) {
       if (type === 'contour') return 'Contour (Auto)'
@@ -459,6 +463,22 @@ export default {
       const detected = detectCutoutShapeType()
       this.detectedCutoutShape = detected
       this.selectedCutoutShape = detected
+    },
+    prevModifierIcon() {
+      const idx = this.modifierIcons.findIndex(i => i.name === this.selectedModifierIcon)
+      if (idx > 0) {
+        this.selectedModifierIcon = this.modifierIcons[idx - 1].name
+      } else {
+        this.selectedModifierIcon = this.modifierIcons[this.modifierIcons.length - 1].name
+      }
+    },
+    nextModifierIcon() {
+      const idx = this.modifierIcons.findIndex(i => i.name === this.selectedModifierIcon)
+      if (idx < this.modifierIcons.length - 1) {
+        this.selectedModifierIcon = this.modifierIcons[idx + 1].name
+      } else {
+        this.selectedModifierIcon = this.modifierIcons[0].name
+      }
     },
     onCutoutShapeChanged() {
       if (this.combinedSvg) {
@@ -714,6 +734,28 @@ h2 {
   font-size: 12px;
   color: #888;
   white-space: nowrap;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #3a3a3a;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.nav-btn:hover {
+  background: #5b9bd5;
+  color: #fff;
 }
 
 .upload-btn {
