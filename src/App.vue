@@ -100,8 +100,40 @@
             {{ icon.name }}
           </option>
         </select>
-        <button class="nav-btn" @click="prevModifierIcon" title="Previous modifier icon">◀</button>
-        <button class="nav-btn" @click="nextModifierIcon" title="Next modifier icon">▶</button>
+        <button class="grid-picker-btn" @click="toggleModifierGridPicker" title="Pick modifier from grid">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="1" y="1" width="4" height="4" rx="0.5"/>
+            <rect x="6" y="1" width="4" height="4" rx="0.5"/>
+            <rect x="11" y="1" width="4" height="4" rx="0.5"/>
+            <rect x="1" y="6" width="4" height="4" rx="0.5"/>
+            <rect x="6" y="6" width="4" height="4" rx="0.5"/>
+            <rect x="11" y="6" width="4" height="4" rx="0.5"/>
+            <rect x="1" y="11" width="4" height="4" rx="0.5"/>
+            <rect x="6" y="11" width="4" height="4" rx="0.5"/>
+            <rect x="11" y="11" width="4" height="4" rx="0.5"/>
+          </svg>
+        </button>
+        <div v-if="showModifierGridPicker" class="grid-picker-overlay" @click.self="showModifierGridPicker = false">
+          <div class="grid-picker-popup">
+            <div class="grid-picker-header">
+              <span>Pick a modifier icon</span>
+              <button class="grid-picker-close" @click="showModifierGridPicker = false">✕</button>
+            </div>
+            <div class="grid-picker-grid">
+              <div
+                v-for="icon in modifierIcons"
+                :key="icon.name"
+                class="grid-picker-item"
+                :class="{ active: selectedModifierIcon === icon.name }"
+                @click="pickModifierIcon(icon.name)"
+                :title="icon.name"
+              >
+                <span class="grid-picker-icon" v-html="previewTheme === 'dark' ? icon.svgDark : icon.svg"></span>
+                <span class="grid-picker-label">{{ icon.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <span
           v-if="selectedModifierIcon"
           class="icon-preview-inline"
@@ -420,7 +452,8 @@ export default {
       previewTheme: 'dark',
       customMainIconSvg: '',
       customMainIconName: '',
-      showGridPicker: false
+      showGridPicker: false,
+      showModifierGridPicker: false
     }
   },
   watch: {
@@ -499,28 +532,19 @@ export default {
       this.detectedCutoutShape = detected
       this.selectedCutoutShape = detected
     },
-    prevModifierIcon() {
-      const idx = this.modifierIcons.findIndex(i => i.name === this.selectedModifierIcon)
-      if (idx > 0) {
-        this.selectedModifierIcon = this.modifierIcons[idx - 1].name
-      } else {
-        this.selectedModifierIcon = this.modifierIcons[this.modifierIcons.length - 1].name
-      }
-    },
-    nextModifierIcon() {
-      const idx = this.modifierIcons.findIndex(i => i.name === this.selectedModifierIcon)
-      if (idx < this.modifierIcons.length - 1) {
-        this.selectedModifierIcon = this.modifierIcons[idx + 1].name
-      } else {
-        this.selectedModifierIcon = this.modifierIcons[0].name
-      }
-    },
     toggleGridPicker() {
       this.showGridPicker = !this.showGridPicker
     },
     pickMainIcon(name) {
       this.selectedMainIcon = name
       this.showGridPicker = false
+    },
+    toggleModifierGridPicker() {
+      this.showModifierGridPicker = !this.showModifierGridPicker
+    },
+    pickModifierIcon(name) {
+      this.selectedModifierIcon = name
+      this.showModifierGridPicker = false
     },
     onCutoutShapeChanged() {
       if (this.combinedSvg) {
@@ -778,27 +802,6 @@ h2 {
   white-space: nowrap;
 }
 
-.nav-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #3a3a3a;
-  color: #999;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.nav-btn:hover {
-  background: #5b9bd5;
-  color: #fff;
-}
 
 .upload-btn {
   display: inline-flex;
