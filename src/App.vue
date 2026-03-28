@@ -62,6 +62,7 @@
         <label for="cutout-shape">Cutout Shape:</label>
         <select id="cutout-shape" v-model="selectedCutoutShape" :disabled="!detectedCutoutShape" @change="onCutoutShapeChanged">
           <option value="" disabled>Auto-detected</option>
+          <option value="contour">✦ Contour (Auto)</option>
           <option value="circle">Circle</option>
           <option value="rect">Rectangle</option>
           <option value="ellipse">Ellipse</option>
@@ -718,28 +719,13 @@ function getCustomCutoutPath(shapeType, bbox) {
 
 /**
  * Detect the best cutout shape type based on the modifier's properties.
- * Returns a custom shape ID for known modifiers, or 'rect', 'circle', 'ellipse'.
+ * Uses 'contour' by default — this follows the same approach as IntelliJ IDEA's
+ * OverlayShapeCreator.java which computes the actual SVG shape outline and applies
+ * a uniform stroke expansion for the cutout, rather than approximating with
+ * geometric primitives.
  */
 function detectCutoutShapeType(bbox, modifierSvg, modifierName) {
-  // Check if this modifier has a dedicated custom shape
-  if (modifierName && CUSTOM_CUTOUT_SHAPES[modifierName]) {
-    return CUSTOM_CUTOUT_SHAPES[modifierName]
-  }
-
-  const padding = 1.5
-  const w = bbox.width + padding * 2
-  const h = bbox.height + padding * 2
-  const aspectRatio = w / h
-
-  const rectScore = computeRectangularityScore(modifierSvg, bbox)
-
-  if (rectScore >= 0.35) {
-    return 'rect'
-  } else if (Math.abs(aspectRatio - 1) < 0.25) {
-    return 'circle'
-  } else {
-    return 'ellipse'
-  }
+  return 'contour'
 }
 
 function determineCutoutShape(bbox, modifierSvg, shapeOverride, modifierName) {
@@ -750,6 +736,13 @@ function determineCutoutShape(bbox, modifierSvg, shapeOverride, modifierName) {
   const h = bbox.height + padding * 2
 
   const shapeType = shapeOverride || detectCutoutShapeType(bbox, modifierSvg, modifierName)
+
+  // Contour-based cutout: uses the actual modifier SVG shapes with stroke expansion.
+  // This replicates IntelliJ IDEA's OverlayShapeCreator.java approach:
+  // computeShape() → BasicStroke(2*scale).createStrokedShape() → Area.add()
+  if (shapeType === 'contour') {
+    return { type: 'contour', strokeWidth: padding * 2 }
+  }
 
   // Custom path-based shapes
   if (shapeType.startsWith('custom-')) {
@@ -819,7 +812,41 @@ function combineIconSvgs(mainSvg, modifierSvg, shapeOverride, modifierName) {
   mask.appendChild(maskRect)
 
   // Black shape = cutout area
-  if (cutout.type === 'circle') {
+  if (cutout.type === 'contour') {
+    // Contour-based cutout: clone modifier SVG elements into the mask with stroke
+    // expansion. This replicates OverlayShapeCreator.java's approach:
+    // SVGDocument.computeShape() → BasicStroke(2*scale).createStrokedShape(shape)
+    // → Area.add(new Area(shape))
+    // The stroke extends outward by strokeWidth/2 from each edge of the shape,
+    // and round joins/caps produce smooth rounded corners on the cutout.
+    const contourGroup = document.createElementNS(svgNS, 'g')
+    contourGroup.setAttribute('stroke', 'black')
+    contourGroup.setAttribute('stroke-width', String(cutout.strokeWidth))
+    contourGroup.setAttribute('stroke-linejoin', 'round')
+    contourGroup.setAttribute('stroke-linecap', 'round')
+    Array.from(modSvgEl.childNodes).forEach(child => {
+      if (child.nodeType === 1 && child.tagName !== 'defs') {
+        const clone = child.cloneNode(true)
+        // For mask rendering, set fill and stroke to black on all elements.
+        // This mirrors Java's Area.add(strokedShape, originalShape):
+        // - fill="black" covers the shape interior
+        // - stroke="black" with strokeWidth provides uniform padding outward
+        // For open paths (e.g. line segments), fill has no visible effect.
+        clone.setAttribute('fill', 'black')
+        clone.setAttribute('stroke', 'black')
+        clone.removeAttribute('fill-rule')
+        clone.removeAttribute('clip-rule')
+        clone.querySelectorAll('*').forEach(el => {
+          el.setAttribute('fill', 'black')
+          el.setAttribute('stroke', 'black')
+          el.removeAttribute('fill-rule')
+          el.removeAttribute('clip-rule')
+        })
+        contourGroup.appendChild(clone)
+      }
+    })
+    mask.appendChild(contourGroup)
+  } else if (cutout.type === 'circle') {
     const circle = document.createElementNS(svgNS, 'circle')
     circle.setAttribute('cx', String(cutout.cx))
     circle.setAttribute('cy', String(cutout.cy))
@@ -931,6 +958,7 @@ export default {
       return icon ? icon.svg : ''
     },
     cutoutShapeLabel(type) {
+      if (type === 'contour') return 'Contour (Auto)'
       if (type === 'rect') return 'Rectangle'
       if (type === 'circle') return 'Circle'
       if (type === 'ellipse') return 'Ellipse'
@@ -980,9 +1008,10 @@ export default {
     downloadIcons() {
       if (!this.combinedSvg) return
       const baseName = `${this.selectedMainIcon}_${this.selectedModifierIcon}`
+      const copyright = '<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->\n'
 
       // Download regular (light) SVG
-      const blob = new Blob([this.combinedSvg], { type: 'image/svg+xml' })
+      const blob = new Blob([copyright + this.combinedSvg], { type: 'image/svg+xml' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -992,7 +1021,7 @@ export default {
 
       // Download dark SVG
       setTimeout(() => {
-        const blobDark = new Blob([this.combinedSvgDark], { type: 'image/svg+xml' })
+        const blobDark = new Blob([copyright + this.combinedSvgDark], { type: 'image/svg+xml' })
         const urlDark = URL.createObjectURL(blobDark)
         const aDark = document.createElement('a')
         aDark.href = urlDark
