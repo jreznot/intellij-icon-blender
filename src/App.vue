@@ -28,9 +28,7 @@
     </h1>
 
     <p class="description">
-      This site forges new icons to be used in plugins for JetBrains IDEs.<br/>
-      Original idea — <strong>Dima Golovkov</strong>, marvelous designer from UX team.<br/>
-      Enjoy! 🎉
+      Forges new icons to be used in plugins for JetBrains IDEs.<br/>
     </p>
 
     <div class="controls">
@@ -98,6 +96,14 @@
       <br/>
       <button class="download-btn" @click="downloadIcons">Download SVG (Light + Dark)</button>
     </div>
+
+    <footer class="footer">
+      <a href="https://intellij-icons.jetbrains.design/" target="_blank">IntelliJ Icons</a>
+      <span class="footer-separator">·</span>
+      Original idea — <a href="https://github.com/DSGolovkov/" target="_blank">Dima Golovkov</a>, our marvelous designer
+      <span class="footer-separator">·</span>
+      Built with <a href="https://www.jetbrains.com/junie/" target="_blank">Junie</a> the AI coding agent by JetBrains.
+    </footer>
   </div>
 </template>
 
@@ -514,9 +520,6 @@ h1 {
   color: #aaa;
 }
 
-.description strong {
-  color: #ccc;
-}
 
 h2 {
   font-size: 18px;
@@ -669,5 +672,29 @@ h2 {
   font-size: 12px;
   color: #888;
   white-space: nowrap;
+}
+
+.footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #333;
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+  line-height: 1.8;
+}
+
+.footer a {
+  color: #5b9bd5;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.footer-separator {
+  margin: 0 6px;
+  color: #555;
 }
 </style>
