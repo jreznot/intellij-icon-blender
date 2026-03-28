@@ -41,6 +41,40 @@
           </option>
           <option value="__custom__" v-if="customMainIconSvg">✦ Custom (uploaded)</option>
         </select>
+        <button class="grid-picker-btn" @click="toggleGridPicker" title="Pick icon from grid">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="1" y="1" width="4" height="4" rx="0.5"/>
+            <rect x="6" y="1" width="4" height="4" rx="0.5"/>
+            <rect x="11" y="1" width="4" height="4" rx="0.5"/>
+            <rect x="1" y="6" width="4" height="4" rx="0.5"/>
+            <rect x="6" y="6" width="4" height="4" rx="0.5"/>
+            <rect x="11" y="6" width="4" height="4" rx="0.5"/>
+            <rect x="1" y="11" width="4" height="4" rx="0.5"/>
+            <rect x="6" y="11" width="4" height="4" rx="0.5"/>
+            <rect x="11" y="11" width="4" height="4" rx="0.5"/>
+          </svg>
+        </button>
+        <div v-if="showGridPicker" class="grid-picker-overlay" @click.self="showGridPicker = false">
+          <div class="grid-picker-popup">
+            <div class="grid-picker-header">
+              <span>Pick a main icon</span>
+              <button class="grid-picker-close" @click="showGridPicker = false">✕</button>
+            </div>
+            <div class="grid-picker-grid">
+              <div
+                v-for="icon in mainIcons"
+                :key="icon.name"
+                class="grid-picker-item"
+                :class="{ active: selectedMainIcon === icon.name }"
+                @click="pickMainIcon(icon.name)"
+                :title="icon.name"
+              >
+                <span class="grid-picker-icon" v-html="previewTheme === 'dark' ? icon.svgDark : icon.svg"></span>
+                <span class="grid-picker-label">{{ icon.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <label class="upload-btn" title="Upload custom main icon SVG">
           …
           <input
@@ -385,7 +419,8 @@ export default {
       combinedSvgDark: '',
       previewTheme: 'dark',
       customMainIconSvg: '',
-      customMainIconName: ''
+      customMainIconName: '',
+      showGridPicker: false
     }
   },
   watch: {
@@ -479,6 +514,13 @@ export default {
       } else {
         this.selectedModifierIcon = this.modifierIcons[0].name
       }
+    },
+    toggleGridPicker() {
+      this.showGridPicker = !this.showGridPicker
+    },
+    pickMainIcon(name) {
+      this.selectedMainIcon = name
+      this.showGridPicker = false
     },
     onCutoutShapeChanged() {
       if (this.combinedSvg) {
@@ -806,5 +848,132 @@ h2 {
 .footer-separator {
   margin: 0 6px;
   color: #555;
+}
+
+.grid-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #3a3a3a;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.grid-picker-btn:hover {
+  background: #5b9bd5;
+  color: #fff;
+}
+
+.grid-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.grid-picker-popup {
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 460px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.grid-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.grid-picker-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.grid-picker-close:hover {
+  background: #444;
+  color: #fff;
+}
+
+.grid-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.grid-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+}
+
+.grid-picker-item:hover {
+  background: #3a3a3a;
+  border-color: #555;
+}
+
+.grid-picker-item.active {
+  background: #3a4a5a;
+  border-color: #5b9bd5;
+}
+
+.grid-picker-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.grid-picker-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.grid-picker-label {
+  font-size: 9px;
+  color: #999;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 76px;
 }
 </style>
