@@ -27,6 +27,12 @@
       IntelliJ Icon Blender
     </h1>
 
+    <p class="description">
+      This site forges new icons to be used in plugins for JetBrains IDEs.<br/>
+      Original idea — <strong>Dima Golovkov</strong>, marvelous designer from UX team.<br/>
+      Enjoy! 🎉
+    </p>
+
     <div class="controls">
       <div class="control-group">
         <label for="main-icon">Main Icon:</label>
@@ -1068,6 +1074,18 @@ h1 {
 
 .jb-logo {
   flex-shrink: 0;
+}
+
+.description {
+  text-align: center;
+  margin-bottom: 32px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #aaa;
+}
+
+.description strong {
+  color: #ccc;
 }
 
 h2 {
