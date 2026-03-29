@@ -182,6 +182,8 @@
       Original idea — <a href="https://github.com/DSGolovkov/" target="_blank">Dima Golovkov</a>, our marvelous designer
       <span class="footer-separator">·</span>
       Built with <a href="https://www.jetbrains.com/junie/" target="_blank">Junie</a> the AI coding agent by JetBrains.
+      <span class="footer-separator">·</span>
+      <a href="https://github.com/jreznot/intellij-icon-blender/pulls" target="_blank" title="Send us a pull request on GitHub">I need more icons!</a>
     </footer>
   </div>
 </template>
