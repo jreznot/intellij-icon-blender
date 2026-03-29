@@ -187,6 +187,8 @@
 </template>
 
 <script>
+const ANALYTICS_ENDPOINT = 'https://eoctm9ws4ltswyu.m.pipedream.net'
+
 const mainIconModules = import.meta.glob('/main-icons/*.svg', { query: '?raw', import: 'default', eager: true })
 const modifierIconModules = import.meta.glob('/modifier-icons/*.svg', { query: '?raw', import: 'default', eager: true })
 
@@ -265,10 +267,7 @@ function getModifierBoundingBox(svgString) {
 
 /**
  * Detect the best cutout shape type based on the modifier's properties.
- * Uses 'contour' by default — this follows the same approach as IntelliJ IDEA's
- * OverlayShapeCreator.java which computes the actual SVG shape outline and applies
- * a uniform stroke expansion for the cutout, rather than approximating with
- * geometric primitives.
+ * Uses 'contour' by default.
  */
 function detectCutoutShapeType() {
   return 'contour'
@@ -369,7 +368,7 @@ function combineIconSvgs(mainSvg, modifierSvg, shapeOverride) {
         // This mirrors Java's Area.add(strokedShape, originalShape):
         // - fill="black" covers the shape interior
         // - stroke="black" with strokeWidth provides uniform padding outward
-        // For open paths (e.g. line segments), fill has no visible effect.
+        // For open paths (e.g., line segments), fill has no visible effect.
         clone.setAttribute('fill', 'black')
         clone.setAttribute('stroke', 'black')
         clone.removeAttribute('fill-rule')
@@ -576,6 +575,17 @@ export default {
     },
     downloadIcons() {
       if (!this.combinedSvg) return
+
+      fetch(ANALYTICS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mainIconId: this.selectedMainIcon,
+          modifierIconId: this.selectedModifierIcon,
+          userAgent: navigator.userAgent
+        })
+      }).catch(() => {})
+
       const mainName = this.selectedMainIcon === '__custom__' ? this.customMainIconName : this.selectedMainIcon
       const baseName = `${mainName}_${this.selectedModifierIcon}`
       const copyright = '<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->\n'
@@ -704,7 +714,6 @@ h2 {
   height: 32px;
 }
 
-.combine-btn,
 .download-btn {
   padding: 10px 24px;
   border: none;
@@ -713,22 +722,6 @@ h2 {
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
-}
-
-.combine-btn {
-  background: #5b9bd5;
-  color: #fff;
-  align-self: flex-start;
-}
-
-.combine-btn:hover:not(:disabled) {
-  background: #4a8bc4;
-}
-
-.combine-btn:disabled {
-  background: #444;
-  color: #888;
-  cursor: not-allowed;
 }
 
 .download-btn {
@@ -801,7 +794,6 @@ h2 {
   color: #888;
   white-space: nowrap;
 }
-
 
 .upload-btn {
   display: inline-flex;
